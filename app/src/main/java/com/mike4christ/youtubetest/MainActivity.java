@@ -2,6 +2,7 @@ package com.mike4christ.youtubetest;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -24,7 +25,7 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
     public static final String API_KEY = "AIzaSyCKZGU9bg_aru7mlMiM5vBQQ4uk3aLgIFo";
 
     //https://www.youtube.com/watch?v=<VIDEO_ID>
-    public static final String VIDEO_ID = "L4mma0prH7k";
+    public static final String VIDEO_ID = "ihNZlp7iUHE";
 
     private YouTubePlayer mPlayer;
 
@@ -33,6 +34,9 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
 
     private Handler mHandler = null;
     private SeekBar mSeekBar;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +88,7 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
     PlaybackEventListener mPlaybackEventListener = new PlaybackEventListener() {
         @Override
         public void onBuffering(boolean arg0) {
+            mHandler.postDelayed(runnable, 1000);
         }
 
         @Override
@@ -93,8 +98,16 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
 
         @Override
         public void onPlaying() {
+            //mSeekBar.setProgress(mPlayer.getCurrentTimeMillis()/100);
+            // set Progress bar values
             mHandler.postDelayed(runnable, 100);
+
+            /*int progress = (int)(getProgressPercentage(mPlayer.getCurrentTimeMillis(), mPlayer.getDurationMillis()));
+            //Log.d("Progress", ""+progress);
+            mSeekBar.setProgress(progress);*/
             displayCurrentTime();
+
+
         }
 
         @Override
@@ -138,8 +151,11 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
     SeekBar.OnSeekBarChangeListener mVideoSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            long lengthPlayed = (mPlayer.getDurationMillis() * progress) / 100;
-            mPlayer.seekToMillis((int) lengthPlayed);
+            if(fromUser){
+                long lengthPlayed = (mPlayer.getDurationMillis() * progress) / 100;
+                mPlayer.seekToMillis((int) lengthPlayed);
+            }
+
         }
 
         @Override
@@ -167,10 +183,26 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
         }
     }
 
+    public int getProgressPercentage(long currentDuration, long totalDuration){
+        Double percentage = (double) 0;
+
+        long currentSeconds = (int) (currentDuration / 1000);
+        long totalSeconds = (int) (totalDuration / 1000);
+
+        // calculating percentage
+        percentage =(((double)currentSeconds)/totalSeconds)*100;
+        Log.d("Percentage", ""+percentage);
+        // return percentage
+        return percentage.intValue();
+    }
+
     private void displayCurrentTime() {
         if (null == mPlayer) return;
+
+
         String formattedTime = formatTime(mPlayer.getDurationMillis() - mPlayer.getCurrentTimeMillis());
         mPlayTimeTextView.setText(formattedTime);
+
     }
 
     private String formatTime(int millis) {
@@ -186,6 +218,11 @@ public class MainActivity extends YouTubeBaseActivity implements OnInitializedLi
         @Override
         public void run() {
             displayCurrentTime();
+
+            //Progress in percentage
+            int progress = mPlayer.getCurrentTimeMillis() * 100 / mPlayer.getDurationMillis();
+            mSeekBar.setProgress(progress);
+
             mHandler.postDelayed(this, 100);
         }
     };
